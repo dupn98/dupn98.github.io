@@ -1,0 +1,8 @@
+# main navigation
+main:
+  - title: "About"
+    url: "/about/"
+  - title: "Posts"
+    url: "/posts/"
+  - title: "Categories"
+    url: "/categories/"

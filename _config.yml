@@ -1,0 +1,21 @@
+# Minimal Mistakes remote theme
+remote_theme: "mmistakes/minimal-mistakes@4.24.0" # Use the latest version or a specific one
+
+# Site settings
+title: Dupn's blog # Corrected and consolidated
+description: My personal blog about tech and life. # Corrected and consolidated
+baseurl: "" # For project sites, e.g., /my-project. Leave empty for user/org sites.
+url: "https://dupn98.github.io" # Your GitHub Pages URL
+author: Dupn # Corrected and consolidated
+email: dupn98@gmail.com # Corrected and consolidated
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-gist
+  - jekyll-paginate
+  - jekyll-include-cache
+
+minimal_mistakes_skin: "default" # or "air", "aqua", "dark", "dirt", etc.
