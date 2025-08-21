@@ -42,7 +42,7 @@ console.log("Hello, Minimal Mistakes!");
 
 You can include images from your `assets` folder. Here's an example:
 
-![Java Logo](/assets/java.png)
+![Java Logo](/_asset/java.png)
 
 ## Blockquotes
 
