@@ -24,3 +24,11 @@ future: true
 
 include:
   - _asset
+
+# Add MathJax support
+mathjax: true
+
+# Include MathJax script in the layout
+head:
+  custom:
+    - '<script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
