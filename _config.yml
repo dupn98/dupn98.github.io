@@ -21,3 +21,6 @@ plugins:
 minimal_mistakes_skin: "default" # or "air", "aqua", "dark", "dirt", etc.
 
 future: true
+
+include:
+  - _asset
