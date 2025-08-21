@@ -6,8 +6,29 @@ title: Dupn's blog # Corrected and consolidated
 description: My personal blog about tech and life. # Corrected and consolidated
 baseurl: "" # For project sites, e.g., /my-project. Leave empty for user/org sites.
 url: "https://dupn98.github.io" # Your GitHub Pages URL
-author: Dupn # Corrected and consolidated
-email: dupn98@gmail.com # Corrected and consolidated
+repository: "dupn98/dupn98.github.io" # GitHub username/repo-name
+
+# Author information
+author:
+  name: "Dupn" # Corrected and consolidated
+  avatar: "/_asset/java.png" # Path to your avatar image
+  bio: "Web developer and tech enthusiast." # Short bio
+  location: "Digital World"
+  email: dupn98@gmail.com # Corrected and consolidated
+  links:
+    - label: "Email"
+      icon: "fas fa-fw fa-envelope-square"
+      url: "mailto:dupn98@gmail.com"
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/dupn98"
+
+# Site Footer
+footer:
+  links:
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/dupn98"
 
 # Build settings
 markdown: kramdown
@@ -18,12 +39,47 @@ plugins:
   - jekyll-paginate
   - jekyll-include-cache
 
+# Pagination settings
+paginate: 5 # Number of posts per page
+paginate_path: /page:num/
+
+# Archives
+category_archive:
+  type: jekyll-archives
+  path: /categories/
+tag_archive:
+  type: jekyll-archives
+  path: /tags/
+
+# Theme settings
 minimal_mistakes_skin: "default" # or "air", "aqua", "dark", "dirt", etc.
+
+# Default Settings
+defaults:
+  # _posts
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: single
+      author_profile: true
+      read_time: true
+      comments: true
+      share: true
+      related: true
+  # _pages
+  - scope:
+      path: "_page"
+      type: pages
+    values:
+      layout: single
+      author_profile: true
 
 future: true
 
 include:
   - _asset
+  - _page
 
 # Add MathJax support
 mathjax: true

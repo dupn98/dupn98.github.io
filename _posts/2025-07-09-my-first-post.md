@@ -8,6 +8,21 @@ tags:
   - Jekyll
   - Blogging
 layout: single
+toc: true
+toc_label: "Contents"
+toc_icon: "cog"
+toc_sticky: true
+header:
+  image: /_asset/java.png
+  caption: "Photo credit: [**Unsplash**](https://unsplash.com)"
+  teaser: /_asset/java.png
+sidebar:
+  - title: "Role"
+    image: /_asset/java.png
+    image_alt: "logo"
+    text: "Designer, Front-End Developer"
+  - title: "Responsibilities"
+    text: "Design and development"
 ---
 
 # Welcome to My Showcase Blog Post!
@@ -67,6 +82,14 @@ $$
 E = mc^2
 $$
 
+And inline math: $e^{i\pi} + 1 = 0$
+
+Or more complex equations:
+
+$$
+\frac{d}{dx}\left( \int_{0}^{x} f(u)\,du\right)=f(x)
+$$
+
 ## Images
 
 You can include images from your `assets` folder. Here's an example:
@@ -76,6 +99,14 @@ You can include images from your `assets` folder. Here's an example:
 ## Blockquotes
 
 > "The only way to do great work is to love what you do." - Steve Jobs
+
+You can also nest blockquotes:
+
+> This is the first level of quoting.
+>
+> > This is nested blockquote.
+>
+> Back to the first level.
 
 ## Tables
 
@@ -118,6 +149,109 @@ Embed audio files:
 Add interactive elements like buttons:
 
 <button onclick="alert('Hello, Jekyll!')">Click Me</button>
+
+## Notice Blocks
+
+Minimal Mistakes includes several types of notice blocks that can be used to highlight important information:
+
+**Default Notice:**
+{: .notice}
+This is a default notice box.
+
+**Primary Notice:**
+{: .notice--primary}
+This is a primary notice box.
+
+**Info Notice:**
+{: .notice--info}
+This is an info notice box.
+
+**Warning Notice:**
+{: .notice--warning}
+This is a warning notice box.
+
+**Success Notice:**
+{: .notice--success}
+This is a success notice box.
+
+**Danger Notice:**
+{: .notice--danger}
+This is a danger notice box.
+
+## Feature Row
+
+You can create a "feature row" to showcase multiple items side by side:
+
+{% capture row_text %}
+[
+  {
+    "image_path": "/_asset/java.png",
+    "alt": "placeholder image 1",
+    "title": "Feature 1",
+    "excerpt": "This is a description for the first feature."
+  },
+  {
+    "image_path": "/_asset/java.png",
+    "alt": "placeholder image 2",
+    "title": "Feature 2",
+    "excerpt": "This is a description for the second feature.",
+    "url": "https://example.com",
+    "btn_label": "Learn More",
+    "btn_class": "btn--primary"
+  },
+  {
+    "image_path": "/_asset/java.png",
+    "alt": "placeholder image 3",
+    "title": "Feature 3",
+    "excerpt": "This is a description for the third feature."
+  }
+]
+{% endcapture %}
+{% assign feature_row = row_text | jsonify %}
+
+{% include feature_row %}
+
+## Gallery
+
+Create an image gallery:
+
+{% capture gallery_items %}
+- url: /_asset/java.png
+  image_path: /_asset/java.png
+  alt: "Gallery image 1"
+  title: "Image 1 Title"
+- url: /_asset/java.png
+  image_path: /_asset/java.png
+  alt: "Gallery image 2"
+  title: "Image 2 Title"
+- url: /_asset/java.png
+  image_path: /_asset/java.png
+  alt: "Gallery image 3"
+  title: "Image 3 Title"
+{% endcapture %}
+
+{% include gallery caption="This is a sample gallery with **Markdown support**." %}
+
+## Responsive Video Embed
+
+Make your video embeds responsive with the `responsive-video-container` class:
+
+<div class="responsive-video-container">
+  <iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
+</div>
+
+## Buttons
+
+Add buttons with various styles:
+
+[Default Button](#){: .btn}
+[Primary Button](#){: .btn .btn--primary}
+[Success Button](#){: .btn .btn--success}
+[Warning Button](#){: .btn .btn--warning}
+[Danger Button](#){: .btn .btn--danger}
+[Info Button](#){: .btn .btn--info}
+[Inverse Button](#){: .btn .btn--inverse}
+[Light Outline Button](#){: .btn .btn--light-outline}
 
 ## Conclusion
 
