@@ -1,0 +1,41 @@
+---
+---
+<!doctype html>
+<html lang="{{ site.locale | slice: 0,2 | default: "en" }}">
+  <head>
+    {% include head.html %}
+    {% include head/custom.html %}
+    <script src="/assets/js/auth.js" defer></script>
+  </head>
+
+  <body class="layout--{{ page.layout | default: layout.layout }}{% if page.classes or layout.classes %}{{ page.classes | default: layout.classes | join: ' ' | prepend: ' ' }}{% endif %}{% if page.private %} private-post{% endif %}">
+    {% include browser-upgrade.html %}
+    {% include masthead.html %}
+
+    <div class="initial-content">
+      <div class="auth-container-wrapper" style="text-align: right; padding: 10px 20px; background-color: #f2f3f3;">
+        <div id="auth-container">
+          <!-- Authentication buttons will be inserted here by JavaScript -->
+          <button id="github-login-btn" class="btn btn--primary btn--small">Login with GitHub</button>
+        </div>
+      </div>
+      
+      {{ content }}
+    </div>
+
+    {% if site.search == true %}
+      <div class="search-content">
+        {% include search/search_form.html %}
+      </div>
+    {% endif %}
+
+    <div id="footer" class="page__footer">
+      <footer>
+        {% include footer/custom.html %}
+        {% include footer.html %}
+      </footer>
+    </div>
+
+    {% include scripts.html %}
+  </body>
+</html>

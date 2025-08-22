@@ -1,0 +1,29 @@
+{% if page.private %}
+  {% if site.github %}
+    {% if site.github.user %}
+      {% if site.github.user.login != site.author.name %}
+        <div class="notice--danger">
+          <h1>Access Denied</h1>
+          <p>This post is private and can only be viewed by the author.</p>
+        </div>
+        {% assign private_post = true %}
+      {% endif %}
+    {% else %}
+      <div class="notice--danger">
+        <h1>Access Denied</h1>
+        <p>This post is private and requires authentication.</p>
+      </div>
+      {% assign private_post = true %}
+    {% endif %}
+  {% else %}
+    <div class="notice--danger">
+      <h1>Access Denied</h1>
+      <p>This post is private and requires authentication.</p>
+    </div>
+    {% assign private_post = true %}
+  {% endif %}
+{% endif %}
+
+{% unless private_post %}
+  ...existing code...
+{% endunless %}
