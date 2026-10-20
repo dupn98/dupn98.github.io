@@ -52,6 +52,21 @@ Quá trình suy luận dưới đây minh họa cách tiếp cận mà không c�
 4. **Suy nghĩ thứ ba — Chỉ cần tập các tần suất đếm (counts):** `"cabbba"` có tần suất `{c:1, a:2, b:3}` → `[1, 2, 3]`; `"abbccc"` có tần suất `{a:1, b:2, c:3}` → `[1, 2, 3]`. Dữ liệu khớp nhau, trả về `true` (thỏa mãn Ví dụ 3). Tuy nhiên, xét phản ví dụ: `word1 = "aab"`, `word2 = "ccd"`. Cả hai đều cho ra `[1, 2]`, nhưng đáp án đúng phải là `false` — do phép 2 chỉ hoán đổi nhãn giữa các ký tự đã tồn tại, nên `'a'` không thể biến thành `'c'`. Key phân loại này quá thô.
 5. **Điểm mấu chốt:** Hãy tự hỏi mỗi phép toán **không thể** thay đổi điều gì. Phép 1 chỉ thay đổi vị trí: tập các loại ký tự và tập tần suất được giữ nguyên. Phép 2 hoán đổi tần suất giữa hai ký tự đang có: tập các loại ký tự và tập tần suất cũng được giữ nguyên. Vậy cặp (tập ký tự phân biệt, danh sách tần suất đã sắp xếp) chính là tính bất biến — và nó đầy đủ, vì khi cả hai yếu tố khớp nhau, ta chỉ cần đổi nhãn cho các ký tự có cùng tần suất rồi hoán vị vị trí là xong.
 6. **Cách triển khai:** Khởi tạo hai mảng `int[26]`. So sánh xem loại ký tự nào có mặt ở hai bên; sau đó sắp xếp hai mảng tần suất và so sánh chúng. Không cần kiểm tra độ dài riêng, vì khi danh sách tần suất bằng nhau thì độ dài chuỗi bắt buộc bằng nhau (như Ví dụ 2, `"a"` và `"aa"` sẽ sai ngay từ bước so sánh `[1]` với `[2]`).
+   ```java
+   boolean closeStrings(String word1, String word2) {
+       int[] c1 = new int[26], c2 = new int[26];
+       for (char ch : word1.toCharArray()) c1[ch - 'a']++;
+       for (char ch : word2.toCharArray()) c2[ch - 'a']++;
+       // Bất biến 1: cùng tập ký tự xuất hiện
+       for (int i = 0; i < 26; i++)
+           if ((c1[i] == 0) != (c2[i] == 0)) return false;
+       // Bất biến 2: cùng multiset tần suất
+       Arrays.sort(c1);
+       Arrays.sort(c2);
+       return Arrays.equals(c1, c2);
+   }
+   ```
+
 7. **Đánh giá giải pháp:** Độ phức tạp $O(n + 26 \log 26)$, bộ nhớ rất nhỏ và không mô phỏng bất cứ bước nào. Toàn bộ cốt lõi bài toán chỉ là tìm ra đúng key.
 8. **Bài học rút ra:** Khi các thao tác là miễn phí và không giới hạn, hãy xác định mỗi thao tác bảo toàn những thuộc tính nào, rồi gom các thuộc tính đó thành một bộ (tuple) để làm hash key. Tiếp theo, hãy cố "tìm lỗ hổng" của key bằng cách tạo ra hai đầu vào có cùng key nhưng kết quả thực tế phải khác nhau. Nếu tìm được, key chưa đủ chặt (cần bổ sung thông tin); nếu mọi nỗ lực đều thất bại vì lý do logic rõ ràng, key đã hoàn thiện.
 
@@ -92,3 +107,9 @@ Quá trình suy luận dưới đây minh họa cách tiếp cận mà không c�
 - **Rolling hash mang tính xác suất.** Hãy chọn cơ số (base) lớn hơn miền giá trị và modulo đủ lớn; chuyển sang Trie nếu cần kết quả chính xác tuyệt đối (Bài 2261).
 - **Đếm cặp cần multiset, không phải set.** Tổng số cặp hoặc kích thước nhóm đòi hỏi số lượng phần tử trong bucket; nếu lưu key vào `HashSet`, các phần tử trùng sẽ âm thầm bị loại bỏ (Bài 3839, 3805).
 - **Bài 149 tránh lỗi số thực của độ dốc** bằng cách biểu diễn đường thẳng dạng số nguyên chuẩn: $a = y_1 - y_2$, $b = x_2 - x_1$, $c = -a x_1 - b y_1$, sau đó chia cả ba cho $\gcd(a, b, c)$ và chuẩn hóa dấu để mỗi đường thẳng chỉ có một biểu diễn. Cách này loại bỏ sai số dấu phẩy động và trường hợp chia cho 0 (đường thẳng đứng), nhưng phải lưu map cho toàn bộ $O(n^2)$ đường thẳng. Cách phổ biến hơn là cố định từng điểm gốc và hash độ dốc dạng phân số $(dy/g, dx/g)$ đã tối giản qua gcd và chuẩn hóa dấu (nếu không, $(1, 2)$ và $(-1, -2)$ sẽ thành hai key khác nhau), với bộ nhớ chỉ $O(n)$ cho mỗi điểm gốc.
+
+## Phân biệt với các mẫu khác
+
+- **Frequency bucket** (xem bài [Frequency Map & Phân tích Tần suất]({% post_url 2026-10-14-frequency-map-phan-tich-tan-suat-bucket-sort-theo-count %})): Ở dạng đó, key phân loại đã lộ rõ và phần phức tạp nhất là xử lý bộ đếm tần suất; còn với Canonical Hash, phần khó nhất là xây dựng được chính cái key.
+- **Set membership:** Bài 804 và 929 quy về đếm số phần tử phân biệt (distinct) sau khi chuẩn hóa. Xếp bài vào dạng Canonical Hash nếu bộ quy tắc biến đổi phức tạp, và vào Set Membership nếu chỉ riêng bước tra cứu (có thuộc set hay không) mới là điểm mấu chốt.
+- **Complement probe:** Bài 1814 chứa cả hai tư duy: bước tách biến đại số là chuẩn hóa, còn thao tác đếm cộng dồn là kỹ thuật dò phần bù. Cách phân biệt: nếu key là $f(x)$ và bạn đi tìm những key **trùng nhau**, đó là Canonical Hash; nếu bạn đi tìm một key **khác** có giá trị $\text{target} - x$, đó là Complement Probe.
