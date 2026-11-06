@@ -1,0 +1,30 @@
+---
+---
+
+@use 'abstracts/variables' with (
+  $theme: '{{ site.theme_mode }}'
+);
+
+/* prettier-ignore */
+@use 'main
+{%- if jekyll.environment == 'production' -%}
+  .bundle
+{%- endif -%}
+';
+
+/* append your custom style below */
+
+/* Lato has no Vietnamese glyphs (ế, ộ, ặ... fall back to another font); use Source Sans Pro, already loaded with the Vietnamese subset. */
+h1, h2, h3, h4, h5,
+header .post-desc,
+kbd,
+.pagination,
+#archives .date.day,
+#notification.toast .toast-body,
+#search-results a,
+#toc-bar .label,
+#toc-popup .header .label,
+#toc-popup #toc-popup-content,
+#toc-solo-trigger .label {
+  font-family: 'Source Sans Pro', 'Microsoft Yahei', sans-serif;
+}
