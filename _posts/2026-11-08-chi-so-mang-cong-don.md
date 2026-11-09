@@ -142,31 +142,36 @@ Mỗi đoạn `nums[l..r]` ứng với đúng một cặp $x < y$. Ngược lạ
 
 Làm vậy không có nghĩa là bỏ bài toán trên `nums`. Mỗi cặp vẫn là một đoạn xác định, nên đếm cặp chính là đếm đoạn; chỉ có cách gọi tên đoạn thay đổi. Từ dòng này trở đi, `nums`, `l` và `r` không cần xuất hiện nữa.
 
-Vòng lặp đếm thực chất duyệt qua **đầu phải** của đoạn. Thân vòng lặp cần đầu phải ở dạng chỉ số tiền tố, nên biến lặp là $y$, chạy qua đủ $n + 1$ ô:
+Vòng lặp đếm duyệt qua **đầu phải** $y$ của đoạn, dưới dạng chỉ số tiền tố. Đoạn khác rỗng có đầu phải nhỏ nhất là $y = 1$ (đoạn `nums[0..0]`), nên $y$ chạy từ $1$ đến $n$.
+
+Ở vòng $y$, cấu trúc phải chứa đúng các đầu trái hợp lệ, tức mọi $x < y$. Từ vòng $y - 1$ sang vòng $y$, tập này có thêm đúng một ô là $x = y - 1$. Vì vậy mỗi vòng làm hai việc theo thứ tự: **cất ô vừa trở thành hợp lệ, rồi hỏi**.
 
 ```java
-for (int y = 0; y <= n; y++) {
+for (int y = 1; y <= n; y++) {
+    add(L[y - 1]);                 // ô y − 1 vừa trở thành một x hợp lệ
     // cấu trúc đang chứa L[0..y-1], tức mọi x < y
     count += countAtLeast(L[y]);   // các cặp (x, y)
-    add(L[y]);                     // ô y sẽ làm x cho các vòng sau
 }
 ```
 
+Dấu $-1$ trong `L[y - 1]` không phải phép đổi loại chỉ số như `r + 1`. Cả $y$ lẫn $y - 1$ đều là chỉ số tiền tố, và $-1$ đến thẳng từ điều kiện $x < y$, tức đoạn dài ít nhất $1$.
+
 Ba chỗ khó chịu ở trên biến mất:
 
-1. Hai dòng cùng dùng `L[y]` với cùng một nghĩa là ô $y$. Ô đó là đầu trái hay đầu phải chỉ do vị trí của nó trong cặp quyết định, không cần đổi tên.
-2. Ô $0$ được cất ở vòng `y = 0` như mọi ô khác. Ở vòng này không có $x < 0$ nên chỉ có bước cất. `map.put(0, 1)` trong nhiều lời giải chính là vòng `y = 0` được làm sẵn.
-3. Ô $n$ cũng được cất như mọi ô. Nó không được dùng tiếp chỉ vì không còn $y$ nào lớn hơn, và không có câu nào phải dịch sang phần tử.
+1. Biến lặp và mọi chỉ số trong ngoặc đều là chỉ số tiền tố. Không còn chỗ nào phải đổi "sau phần tử $r$" thành "trước phần tử $r + 1$".
+2. Ô $0$ được cất ở vòng `y = 1` như mọi ô khác, không cần khởi tạo riêng. `map.put(0, 1)` trong nhiều lời giải chính là bước cất này được làm sẵn trước vòng lặp.
+3. Ô $n$ không bị cất, vì không có $y$ nào lớn hơn $n$ cần đến nó.
 
 Theo dõi lại ô $L[1]$:
 
 | Vòng | Việc | Ô được gọi là |
 |---|---|---|
-| `y = 1` | hỏi, rồi cất | `L[y]`, `y = 1` |
+| `y = 1` | hỏi | `L[y]`, `y = 1` |
+| `y = 2` | cất | `L[y - 1]`, `y - 1 = 1` |
 | `y = 2` | được đếm trong cặp $x = 1$, $y = 2$, tức `nums[1..1]` | `L[x]`, `x = 1` |
 | `y = 3` | được đếm trong cặp $x = 1$, $y = 3$, tức `nums[1..2]` | `L[x]`, `x = 1` |
 
-Ô này luôn được nhận ra qua cùng một con số là $1$.
+Ở mọi lần dùng, chỉ số trong ngoặc đều là chỉ số tiền tố và đều bằng $1$. Trong vòng cũ, cùng ô này lúc ứng với `r = 0`, lúc lại ứng với `l = 1`.
 
 ## Bài 4013: lời giải Java
 
@@ -188,25 +193,26 @@ class Solution {
             L[x] = ((long) a + b) * E[x] - (long) a * x;
         }
 
-        // Nén giá trị của L về hạng 1..m để làm chỉ số cho cây Fenwick
+        // rank[x] = hạng của L[x] trong 1..m, dùng làm chỉ số cho cây Fenwick
         long[] sorted = Arrays.stream(L).sorted().distinct().toArray();
         int m = sorted.length;
-        int[] bit = new int[m + 1];
+        int[] rank = new int[n + 1];
+        for (int x = 0; x <= n; x++) rank[x] = Arrays.binarySearch(sorted, L[x]) + 1;
 
+        int[] bit = new int[m + 1];
         long count = 0;
-        for (int y = 0; y <= n; y++) {
+        for (int y = 1; y <= n; y++) {
+            for (int node = rank[y - 1]; node <= m; node += node & -node) bit[node]++; // cất ô y − 1
             // bit đang chứa L[0..y-1], tức đúng y giá trị
-            int rank = Arrays.binarySearch(sorted, L[y]) + 1;
-            count += y - countRankAtMost(bit, rank - 1); // số x < y có L[x] >= L[y]
-            for (int node = rank; node <= m; node += node & -node) bit[node]++;
+            count += y - countRankAtMost(bit, rank[y] - 1); // số x < y có L[x] >= L[y]
         }
         return count;
     }
 
-    // Số giá trị đã cất có hạng từ 1 đến rank
-    private int countRankAtMost(int[] bit, int rank) {
+    // Số giá trị đã cất có hạng từ 1 đến maxRank
+    private int countRankAtMost(int[] bit, int maxRank) {
         int s = 0;
-        for (int node = rank; node > 0; node -= node & -node) s += bit[node];
+        for (int node = maxRank; node > 0; node -= node & -node) s += bit[node];
         return s;
     }
 }
@@ -221,12 +227,19 @@ Trong cả lời giải, chỉ có một chỗ trộn hai loại chỉ số: dò
 3. **Chỉ trộn ở hai chỗ:**
    - khi xây mảng tiền tố: `P[i + 1] = P[i] + nums[i]`;
    - khi dịch đoạn, đúng một lần sau chứng minh: $x = l$, $y = r + 1$.
-4. **Viết vòng lặp đếm theo $y$**, thường từ `0` đến `n`, và ghi bất biến "cấu trúc đang chứa những ô nào" ngay trên vòng lặp. Bất biến quyết định thứ tự hỏi và cất.
+4. **Một khuôn vòng lặp cho mọi bài.** Gọi $d$ là độ dài tối thiểu của đoạn, thường $d = 1$. Điều kiện về đầu trái là $x \le y - d$, nên:
+
+   ```java
+   for (int y = d; y <= n; y++) {
+       add(P[y - d]);    // ô vừa trở thành một x hợp lệ
+       query(P[y]);      // cấu trúc đang chứa đúng P[0..y-d]
+   }
+   ```
 5. **Tự kiểm tra.** Nếu thấy `P[r + 1]` hay `P[l]` bên trong vòng lặp đếm, nghĩa là bạn chưa dịch.
 
 ## Áp dụng
 
-Mỗi bài dưới đây đi qua đúng ba bước: chứng minh trên `nums[l..r]`, dịch sang $x$, $y$, rồi viết code.
+Mỗi bài dưới đây đi qua đúng ba bước: chứng minh trên `nums[l..r]`, dịch sang $x$, $y$, rồi viết code theo cùng một khuôn vòng lặp.
 
 ### 560. Subarray Sum Equals K
 
@@ -244,9 +257,9 @@ class Solution {
 
         Map<Integer, Integer> seen = new HashMap<>(); // seen[v] = số x < y có P[x] = v
         int count = 0;
-        for (int y = 0; y <= n; y++) {
+        for (int y = 1; y <= n; y++) {
+            seen.merge(P[y - 1], 1, Integer::sum);
             count += seen.getOrDefault(P[y] - k, 0);
-            seen.merge(P[y], 1, Integer::sum);
         }
         return count;
     }
@@ -269,10 +282,9 @@ class Solution {
 
         int[] seen = new int[k]; // seen[v] = số x < y có P[x] mod k = v
         int count = 0;
-        for (int y = 0; y <= n; y++) {
-            int v = Math.floorMod(P[y], k); // % của Java trả số âm khi P[y] < 0
-            count += seen[v];
-            seen[v]++;
+        for (int y = 1; y <= n; y++) {
+            seen[Math.floorMod(P[y - 1], k)]++; // floorMod vì % của Java trả số âm khi P < 0
+            count += seen[Math.floorMod(P[y], k)];
         }
         return count;
     }
@@ -297,10 +309,10 @@ class Solution {
 
         Map<Integer, Integer> first = new HashMap<>(); // first[v] = x nhỏ nhất (x < y) có P[x] = v
         int best = 0;
-        for (int y = 0; y <= n; y++) {
+        for (int y = 1; y <= n; y++) {
+            first.putIfAbsent(P[y - 1], y - 1);
             Integer x = first.get(P[y]);
             if (x != null) best = Math.max(best, y - x);
-            first.putIfAbsent(P[y], y);
         }
         return best;
     }
@@ -333,4 +345,4 @@ class Solution {
 }
 ```
 
-Bài này **cất trước, hỏi sau**, và thứ được cất là $P[y - 2]$ chứ không phải $P[y]$. Thứ tự này không theo thói quen mà được suy ra từ bất biến: muốn hỏi ở vòng $y$ thì tập phải đang chứa đúng các $x \le y - 2$.
+Đây vẫn là khuôn vòng lặp chung, chỉ khác $d = 2$: $y$ bắt đầu từ $2$, và ô vừa trở thành hợp lệ ở mỗi vòng là $y - 2$.
