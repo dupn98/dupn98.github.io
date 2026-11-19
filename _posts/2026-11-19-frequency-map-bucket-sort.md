@@ -41,7 +41,7 @@ Hãy nghĩ đến Freq Map khi thấy một trong các dấu hiệu sau:
 
 Kết quả là `maxF * k <= n`.
 
-> Bài học rút ra: hãy gạch bỏ mọi yếu tố về vị trí và giá trị trong điều kiện đề bài. Nếu thứ còn sót lại chỉ là tần suất, hãy tìm một bất đẳng thức trên bảng đếm và chứng minh nó đạt được bằng một cách dựng cụ thể (như chia xoay vòng hoặc điền cách bước).
+> Bài học rút ra: hãy gạch bỏ mọi yếu tố về vị trí và giá trị trong điều kiện đề bài. Nếu thứ còn sót lại chỉ là tần suất, hãy tìm một bất đẳng thức trên bảng đếm và chứng minh nó đạt được bằng một cách dựng cụ thể (như chia xoay vòng ở bài này, hoặc điền cách một ô: rải phần tử nhiều nhất vào các vị trí chẵn trước rồi tới vị trí lẻ, như LC 767 với điều kiện `maxFreq <= ceil(n / 2)`).
 {: .prompt-tip }
 
 ## 3. Công thức 4 bước triển khai
