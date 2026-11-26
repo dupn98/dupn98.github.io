@@ -2,7 +2,7 @@
 title: "Your benchmark is lying to you"
 description: "Năm thí nghiệm nhỏ trên JVM: mean, lần chạy đầu, vòng lặp nanoTime, test 30 giây và load generator closed-loop đều có thể đánh lừa bạn khi đo hiệu năng."
 date: 2026-11-18 10:36:26 +0700
-categories: [java]
+categories: [Java]
 tags: [java, jvm, performance, book-notes]
 pin: false
 toc: true

@@ -20,10 +20,9 @@ mermaid: true # true to enable Mermaid diagrams
 - Bài viết này xây dựng 5 bước: **source -> bytecode -> classloading -> interpreter -> JIT**. Cuối cùng, chúng ta sẽ đi đến kết luận: *Code mà chạy không phải code mà bạn viết*
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["HelloWorld.java"] -->|javac| B["HelloWorld.class (bytecode)"]
-    B -->|class loader| C["JVM"]
-    C --> D["Interpreter"]
+    B -->|class loader| D["Interpreter (trong JVM)"]
     D -->|"code hot"| E["JIT compiler"]
     E --> F["Native machine code"]
     D -.->|"profiling data"| E
