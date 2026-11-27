@@ -1,6 +1,6 @@
 ---
-title: "Đếm chuỗi con không chứa \"abc\": contribution với vị trí gánh là chữ c"
-description: "Áp dụng kỹ thuật contribution: giao mỗi chuỗi con hỏng cho chữ c đầu tiên làm nó hỏng, đổi vòng lặp để chữ c nằm ngoài, rồi thu vòng trong. Mấu chốt là các khối điểm đầu phải rời nhau, nên con trỏ nhảy tới pA + 1 chứ không phải i + 1."
+title: "Đếm chuỗi con không chứa \"abc\": cố định đầu mút phải"
+description: "Cố định đầu mút phải r và đếm trực tiếp các chuỗi con hợp lệ: [l, r] chứa abc khi và chỉ khi l ≤ startABC(r), với startABC(r) là vị trí chữ a muộn nhất trong các bộ abc nằm trong s[0..r]. Ba biến startA, startAB, startABC cập nhật startABC(r) trong O(1)."
 date: 2026-11-16 10:00:00 +0700
 categories: [algorithm]
 tags: [leetcode, counting, contribution, subsequence]
@@ -11,174 +11,185 @@ math: true
 mermaid: false
 ---
 
-Đề: cho chuỗi `s` chỉ gồm `a`, `b`, `c`. Một chuỗi **hợp lệ** nếu nó không chứa `"abc"` dưới dạng *dãy con* (subsequence, không cần liền nhau). Đếm số chuỗi con (substring) hợp lệ của `s`.
+Đề: cho chuỗi `s` chỉ gồm `a`, `b`, `c`, với $n \le 10^5$. Một chuỗi được gọi là **hợp lệ** nếu nó không chứa `"abc"` như một *dãy con*. Hãy đếm số chuỗi con hợp lệ của `s`.
 
-Đếm phần bù sẽ dễ hơn: lấy tổng số chuỗi con $\frac{n(n+1)}{2}$ trừ đi số chuỗi con **chứa** `abc`. Gọi các chuỗi con đó là chuỗi con *hỏng*.
+Với `s = "abcabc"`, có 21 chuỗi con, trong đó 7 chuỗi chứa `abc`, nên đáp án là 14.
 
-Bài này là một biến thể của dạng 3 trong bài [Mỗi vị trí gánh bao nhiêu đoạn?]({% post_url 2026-11-10-contribution-counting %}): đoạn được giao cho phần tử đầu tiên thỏa điều kiện. Ở đó, với 2495, đoạn được giao cho số chẵn đầu tiên của nó. Ở đây, chuỗi con hỏng được giao cho **chữ `c` đầu tiên làm nó hỏng**. Khác biệt duy nhất nằm ở biên trái của vòng $l$, và đó cũng là chỗ lời giải đầu tiên của mình sai.
+Bài này đi theo cùng hướng với bài 1513 trong [Đếm đóng góp (contribution): mỗi đoạn được tính cho vị trí nào?]({% post_url 2026-11-10-contribution-counting %}) (câu hỏi 2: cố định đầu mút phải $r$ của chuỗi con rồi đếm các đầu mút trái $l$ thỏa mãn). Điểm khác nằm ở lượng thông tin cần nhớ: ở 1513 chỉ cần vị trí số `0` gần nhất, còn ở đây cần ba biến nối tiếp nhau.
 
-## Lời giải đầu tiên và chỗ sai
+## Thuật ngữ
 
-Ý tưởng ban đầu: đi từ trái sang phải, mỗi khi gặp một bộ `a..b..c` thì đếm mọi chuỗi con chứa bộ đó, rồi bỏ qua bộ đó và tìm bộ tiếp theo.
+- **Chuỗi con** (substring): đoạn liên tiếp $s[l..r]$.
+- **Dãy con** (subsequence): chọn một số vị trí tăng dần, không cần liền nhau. `"abc"` là dãy con của `"axbxc"`.
+- **Bộ `abc`**: ba vị trí $i < j < k$ với `s[i] = a`, `s[j] = b`, `s[k] = c`. **Cặp `ab`**: hai vị trí $i < j$ với `s[i] = a`, `s[j] = b`.
+- **Tiền tố của mẫu**: phần đầu của mẫu. Mẫu `abc` có ba tiền tố khác rỗng: `a`, `ab`, `abc`.
+- **Vị trí đầu** của một dãy con là vị trí nhỏ nhất trong các vị trí được chọn (chữ `a` trong `abc`). **Đầu mút trái** $l$ và **đầu mút phải** $r$ là hai vị trí đầu và cuối của chuỗi con $s[l..r]$.
+
+Nói "chuỗi con chứa `abc`" nghĩa là chứa `abc` như một dãy con, tức là có một bộ `abc` nằm trọn trong $[l, r]$.
+
+## Bước 1: duyệt trâu (brute force)
+
+Ta phân loại mỗi chuỗi con theo đầu mút phải $r$ của nó và đếm thẳng các chuỗi hợp lệ, không cần qua phần bù:
 
 ```java
-if (c == 'c' && pA >= previousPos) {     // pA = vị trí 'a' của bộ a..b..c mới nhất
-    count += (long) (pA - previousPos + 1) * (n - i);
-    previousPos = i + 1;                  // nhảy qua cả bộ vừa dùng
+for (int r = 0; r < n; r++)
+    for (int l = 0; l <= r; l++)
+        if (!containsAbc(l, r)) count++;   // containsAbc: kiểm tra dãy con abc trong s[l..r]
+```
+
+## Bước 2: với $r$ cố định, những $l$ nào hợp lệ?
+
+Đoạn $[l, r]$ chứa `abc` khi và chỉ khi tồn tại một bộ `abc` $(i, j, k)$ với $l \le i$ và $k \le r$.
+
+Với $r$ cho trước, ta xét mọi bộ có $k \le r$ và đặt
+
+$$
+\text{startABC}(r) = \text{giá trị } i \text{ lớn nhất của các bộ đó} \quad (-1 \text{ nếu không có bộ nào}).
+$$
+
+Nói cách khác, $\text{startABC}(r)$ là **điểm bắt đầu muộn nhất của một bộ `abc`** trong $s[0..r]$: chữ `a` nằm xa về bên phải nhất mà phía sau nó vẫn còn một chữ `b` rồi một chữ `c`, không vượt quá $r$.
+
+**Khẳng định:** $[l, r]$ chứa `abc` $\iff l \le \text{startABC}(r)$.
+
+- ($\Rightarrow$) Giả sử $[l, r]$ chứa một bộ có $i \ge l$. Bộ này cũng có $k \le r$, nên $\text{startABC}(r) \ge i \ge l$.
+- ($\Leftarrow$) Bộ đạt $\text{startABC}(r)$ có $i = \text{startABC}(r) \ge l$ và $k \le r$. Do $l \le i < j < k \le r$, hai vị trí $j, k$ cũng nằm trong $[l, r]$, tức là cả bộ nằm trọn trong $[l, r]$.
+
+Như vậy, với $r$ cố định, $l$ hợp lệ khi và chỉ khi $l > \text{startABC}(r)$. Ta viết lại vòng lặp trong:
+
+```java
+for (int r = 0; r < n; r++)
+    for (int l = 0; l <= r; l++)
+        if (l > startABC(r)) count++;
+```
+
+Các giá trị $l$ thỏa $\text{startABC}(r) < l \le r$ tạo thành một đoạn liên tiếp, nên số lượng của chúng là $r - \text{startABC}(r)$. Nhờ đó ta rút gọn được vòng lặp theo $l$:
+
+```java
+for (int r = 0; r < n; r++)
+    count += r - startABC(r);
+```
+
+Cấu trúc này giống hệt bài 1513: ở đó $[l, r]$ chỉ gồm số `1` khi $z_r < l \le r$, với $z_r$ là vị trí số `0` gần nhất. Ở bài này, $\text{startABC}(r)$ đóng vai trò của $z_r$. Việc còn lại là tính $\text{startABC}(r)$ khi $r$ tăng dần.
+
+## Bước 3: tính $\text{startABC}(r)$
+
+Một bộ `abc` luôn kết thúc bằng chữ `c`, nên $\text{startABC}(r)$ chỉ có thể thay đổi khi $s[r]$ = `c`. Ở các vị trí khác, nó giữ nguyên giá trị cũ.
+
+Khi gặp chữ `c` tại $k$, ta cần chữ `a` muộn nhất mà giữa nó và $k$ có một chữ `b`. Cách làm tự nhiên nhất là chuẩn bị hai mảng:
+
+- `prevA[j]`: vị trí chữ `a` gần nhất đứng trước $j$ ($-1$ nếu không có).
+- `prevB[k]`: vị trí chữ `b` gần nhất đứng trước $k$ ($-1$ nếu không có).
+
+Tại chữ `c` ở $k$: lấy chữ `b` gần nhất $j$ = `prevB[k]`, rồi lấy chữ `a` gần nhất trước nó, $i$ = `prevA[j]`. Bộ $(i, j, k)$ chính là bộ có chữ `a` muộn nhất.
+
+**Vì sao chọn chữ `b` gần nhất là đúng?** Chỉ cần một nhận xét: vị trí càng dịch sang phải thì chữ `a` gần nhất phía trước nó càng muộn, hoặc giữ nguyên. Nói cách khác, nếu $j' \le j$ thì `prevA[j']` $\le$ `prevA[j]`, vì mọi chữ `a` đứng trước $j'$ cũng đứng trước $j$.
+
+Bây giờ xét một bộ `abc` bất kỳ $(i', j', k')$ với $k' \le k$. Chữ `b` của nó đứng trước $k$, nên $j' \le j$, với $j$ là chữ `b` gần nhất trước $k$. Chữ `a` của nó đứng trước $j'$, nên
+
+$$
+i' \le \texttt{prevA}[j'] \le \texttt{prevA}[j] = i.
+$$
+
+Vậy không bộ nào, kể cả các bộ kết thúc ở những chữ `c` trước đó, có chữ `a` muộn hơn $i$. Ta gán thẳng $\text{startABC} = i$ mà không cần so với giá trị cũ.
+
+```java
+int n = s.length();
+int[] prevA = new int[n], prevB = new int[n];
+int a = -1, b = -1, startABC = -1;
+long count = 0;
+for (int r = 0; r < n; r++) {
+    prevA[r] = a;                 // chữ a gần nhất đứng trước r
+    prevB[r] = b;                 // chữ b gần nhất đứng trước r
+    char c = s.charAt(r);
+    if (c == 'a') a = r;
+    else if (c == 'b') b = r;
+    else if (prevB[r] >= 0) startABC = prevA[prevB[r]];
+    count += r - startABC;
 }
 ```
 
-Trong đầu mình hình dung các bộ `a..b..c` **tách rời** nhau: bộ thứ nhất, rồi bộ thứ hai nằm sau nó, v.v. Thử với `s = "abcabc"` ($n = 6$, tổng 21 chuỗi con):
+**Bỏ hai mảng.** Tại mỗi chữ `c`, ta chỉ đọc `prevA` ở đúng một chỗ: chữ `b` gần nhất. Vì vậy không cần lưu cả mảng. Mỗi khi gặp chữ `b`, ta ghi lại luôn chữ `a` gần nhất trước nó vào một biến, gọi là `startAB` (điểm bắt đầu muộn nhất của một cặp `ab`). Biến `a` đổi tên thành `startA` cho đồng bộ. Đến chữ `c`, ta chỉ việc gán `startABC = startAB`.
 
-| Điểm đầu | Chuỗi con hỏng | Số lượng |
-| --- | --- | --- |
-| 0 | `abc`, `abca`, `abcab`, `abcabc` | 4 |
-| 1 | `bcabc` | 1 |
-| 2 | `cabc` | 1 |
-| 3 | `abc` | 1 |
-
-Đáp án đúng là 7 chuỗi hỏng. Code trên đếm được $4 + 1 = 5$: nó bỏ sót `bcabc` và `cabc`. Hai chuỗi này **bắt đầu bên trong** bộ thứ nhất (vị trí 0..2) nhưng dùng bộ thứ hai (vị trí 3..5). Khi nhảy `previousPos = 3`, ta đã vứt điểm đầu 1 và 2 đi, dù chưa chữ `c` nào gánh chúng.
-
-Lời giải này *gần như* là contribution: công thức `(số điểm đầu) * (n - i)` đã đúng dạng. Nó chỉ chưa trả lời rõ câu hỏi "chữ `c` này gánh **những** chuỗi con nào". Làm lại theo đúng các bước.
-
-## Bước 1: brute force
-
-```java
-for (int l = 0; l < n; l++)
-    for (int r = l; r < n; r++)
-        if (containsAbc(l, r)) invalid++;
-```
-
-## Bước 2: chọn vị trí gánh
-
-Đề hỏi **số lượng**, nên mỗi chuỗi con hỏng phải được giao cho **đúng một** vị trí.
-
-Cố định điểm đầu $l$. Nếu $s[l..r]$ chứa `abc` thì $s[l..r+1]$ cũng chứa (thêm ký tự không phá dãy con đã có). Nên với mỗi $l$ có một vị trí $f(l)$, là **điểm cuối hỏng đầu tiên**:
-
-- $r < f(l)$: hợp lệ,
-- $r \ge f(l)$: hỏng.
-
-$s[f(l)]$ luôn là chữ `c` (chính chữ `c` hoàn tất bộ `abc`). Giao chuỗi con hỏng $[l, r]$ cho vị trí $f(l)$. Mỗi chuỗi hỏng có đúng một $f(l)$, nên không đếm trùng.
-
-So với 2495: ở đó "phần tử đầu tiên thỏa điều kiện" là số chẵn đầu tiên trong đoạn. Ở đây là vị trí đầu tiên mà, tính từ $l$, đoạn đã chứa đủ `abc`.
-
-## Bước 3: đổi vòng, đưa vị trí gánh ra ngoài
-
-```java
-for (int i = 0; i < n; i++) if (s.charAt(i) == 'c')
-    for (int l : những điểm đầu có f(l) == i)
-        for (int r = i; r < n; r++)
-            invalid++;
-```
-
-Vòng $r$ chạy $n - i$ lần, giống hệt 2495. Phần còn lại: tập "những điểm đầu có $f(l) = i$" trông thế nào?
-
-### Các điểm đầu gánh bởi cùng một chữ `c` đứng liền nhau
-
-Nếu $s[l+1..r]$ chứa `abc` thì $s[l..r]$ cũng chứa (chuỗi dài hơn). Nên $f(l) \le f(l+1)$: $f$ không giảm theo $l$. Các điểm đầu có cùng $f$ gom thành **khối liền nhau**:
-
-```
-điểm đầu l:  [ 0 ] [ 1  2  3 ] [ 4  5 ...
-f(l):           2        5        không có
-gánh bởi:     c@2      c@5
-```
-
-Mỗi điểm đầu thuộc đúng một khối, nên các khối **rời nhau và phủ hết**. Đây là điều kiện để phép đếm đúng, và cũng là thứ lời giải đầu tiên làm hỏng.
-
-### Biên của khối
-
-Gọi $L(i)$ là **điểm đầu lớn nhất** của một bộ `a..b..c` nằm trong $s[0..i]$. Khi đó:
-
-$$
-f(l) \le i \iff s[l..i] \text{ chứa } abc \iff l \le L(i)
-$$
-
-Các điểm đầu có $f(l) = i$ là những $l$ thỏa $l \le L(i)$ nhưng chưa thỏa ở chữ `c` gánh trước đó $i'$:
-
-$$
-L(i') < l \le L(i)
-$$
-
-Đặt `prev` $= L(i') + 1$, vòng $l$ chạy từ `prev` tới $L(i)$:
-
-```java
-for (int i = 0; i < n; i++) if (s.charAt(i) == 'c' && L(i) >= prev) {
-    for (int l = prev; l <= L(i); l++)
-        for (int r = i; r < n; r++)
-            invalid++;
-    prev = L(i) + 1;
-}
-```
-
-## So với 2495: chỗ khác duy nhất
-
-|  | 2495 (tích chẵn) | Bài này |
-| --- | --- | --- |
-| Vị trí gánh | số chẵn đầu tiên trong đoạn | chữ `c` làm đoạn hỏng lần đầu |
-| Vòng $l$ | $(p_i, i]$ | $(L(i'), L(i)]$ |
-| Biên trái mới sau khi đếm | `prevEven = i` | `prev = L(i) + 1` |
-| Vòng $r$ | $[i, n)$ | $[i, n)$ |
-
-Ở 2495, khối điểm đầu của số chẵn $i$ kết thúc **tại chính $i$**, nên biên mới là $i$. Mình mang thói quen đó sang đây và viết `previousPos = i + 1`.
-
-Nhưng ở bài này khối của chữ `c` tại $i$ kết thúc tại $L(i)$, **trước** $i$. Các điểm đầu $L(i) + 1, \dots, i$ không dùng được bộ `abc` hiện tại (chữ `a` muộn nhất của bộ nằm trước chúng), nên chúng chưa được gánh và phải chờ chữ `c` sau. Nhảy tới $i + 1$ là đánh rơi chúng, khối không còn phủ hết.
-
-Chạy lại `"abcabc"`:
-
-| $i$ | $L(i)$ | khối điểm đầu | $n - i$ | cộng |
-| --- | --- | --- | --- | --- |
-| 2 | 0 | [0, 0] | 4 | 4 |
-| 5 | 3 | [1, 3] | 1 | 3 |
-
-Tổng 7. Điểm đầu 1 và 2 giờ được chữ `c` tại 5 gánh.
-
-## Bước 4: thu vòng trong
-
-Vòng $l$ chạy $L(i) - \texttt{prev} + 1$ lần, vòng $r$ chạy $n - i$ lần:
-
-$$
-\text{invalid} \mathrel{+}= (L(i) - \texttt{prev} + 1)(n - i)
-$$
-
-Còn lại là duy trì $L(i)$ trong $O(1)$. Muốn bộ `a..b..c` có điểm đầu lớn nhất thì ở mỗi chặng chọn chữ muộn nhất có thể:
-
-- `a`: vị trí chữ `a` mới nhất.
-- `ab`: khi gặp `b`, điểm đầu lớn nhất của `ab` kết thúc ở `b` này là `a` mới nhất trước nó, nên gán `ab = a`.
-- khi gặp `c`: $L(i) = $ `ab`.
+## Code
 
 ```java
 class Solution {
-    public long countValidSubstrings(String s) {
-        int n = s.length();
-        long total = (long) n * (n + 1) / 2, invalid = 0;
-        int a = -1, ab = -1, prev = 0;   // ab = L(i): điểm đầu lớn nhất của dãy con "ab"
-        for (int i = 0; i < n; i++) {
-            char c = s.charAt(i);
-            if (c == 'a') a = i;
-            else if (c == 'b') ab = a;
-            else if (ab >= prev) {       // chữ c tại i gánh các điểm đầu [prev, ab]
-                invalid += (long) (ab - prev + 1) * (n - i);
-                prev = ab + 1;           // khối kế tiếp bắt đầu ngay sau khối này
-            }
+    public long countValid(String s) {      // s chỉ gồm a, b, c
+        long count = 0;
+        int startA = -1, startAB = -1, startABC = -1;   // điểm bắt đầu muộn nhất của a / ab / abc
+        for (int r = 0; r < s.length(); r++) {
+            char c = s.charAt(r);
+            if (c == 'a') startA = r;
+            else if (c == 'b') startAB = startA;
+            else startABC = startAB;           // c == 'c'
+            count += r - startABC;            // số l hợp lệ với đầu mút phải r
         }
-        return total - invalid;
+        return count;
     }
 }
 ```
 
-$O(n)$ thời gian, $O(1)$ bộ nhớ. Đã đối chiếu với brute force $O(n^2)$ trên 200 000 chuỗi ngẫu nhiên độ dài tới 12, kết quả khớp.
+Thuật toán chạy trong $O(n)$ thời gian và $O(1)$ bộ nhớ. Bạn nên tự đối chiếu với cách duyệt trâu $O(n^2)$ trên các chuỗi ngẫu nhiên ngắn (mình đã thử 5 000 chuỗi có độ dài tới 14 và kết quả đều khớp). Đây chỉ là bước kiểm tra, còn phần chứng minh nằm ở trên.
 
-## "Các bộ ba trộn vào nhau" là bình thường
+Ta chạy tay với `"abcabc"`:
 
-Thứ làm mình rối: các bộ `a..b..c` dùng cho các khối khác nhau có thể đan vào nhau, hoặc một bộ phục vụ nhiều điểm đầu. Ví dụ `s = "aabc"`: chỉ có bộ (1, 2, 3) được dùng, nhưng chữ `c` tại 3 gánh cả điểm đầu 0 lẫn 1.
+| $r$ | `s[r]` | `startA` | `startAB` | `startABC` | $l$ hợp lệ | $r - \text{startABC}$ |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 0 | `a` | 0 | $-1$ | $-1$ | 0 | 1 |
+| 1 | `b` | 0 | 0 | $-1$ | 0, 1 | 2 |
+| 2 | `c` | 0 | 0 | 0 | 1, 2 | 2 |
+| 3 | `a` | 3 | 0 | 0 | 1, 2, 3 | 3 |
+| 4 | `b` | 3 | 3 | 0 | 1, 2, 3, 4 | 4 |
+| 5 | `c` | 3 | 3 | 3 | 4, 5 | 2 |
 
-Điều đó không làm sai phép đếm, vì thứ được chia **không phải** các chữ cái trong `s` mà là các chuỗi con, thông qua điểm đầu của chúng. Bộ ba chỉ là công cụ để tìm $f(l)$. Miễn là mỗi điểm đầu thuộc đúng một khối, phép đếm đúng, dù các bộ ba có chồng lên nhau hay không.
+Tổng là $1 + 2 + 2 + 3 + 4 + 2 = 14$. Thử kiểm tra vài dòng: với $r = 2$, $l = 0$ cho `abc` (không hợp lệ), còn $l = 1$ cho `bc` và $l = 2$ cho `c` (hợp lệ). Với $r = 5$, $l = 3$ cho `abc` (không hợp lệ), còn $l = 4$ cho `bc` và $l = 5$ cho `c` (hợp lệ).
+
+## Dạng bài này
+
+Đây là bài toán đếm chuỗi con chứa (hoặc không chứa) một mẫu như dãy con. Cách làm gồm hai bước:
+
+1. **Cố định $r$ và xác định tập các $l$ không hợp lệ.** Bài toán có *tính chất đơn điệu* theo $l$: nếu $[l, r]$ đã chứa mẫu thì $[l-1, r]$ cũng chứa, vì mở rộng đoạn sang trái không làm mất dãy con nào. Do đó các $l$ không hợp lệ tạo thành một đoạn đầu $l \le \text{start}(r)$, với $\text{start}(r)$ là điểm bắt đầu muộn nhất của một dãy con khớp mẫu trong $s[0..r]$ (với mẫu `abc`, đó chính là $\text{startABC}(r)$). Số $l$ hợp lệ là $r - \text{start}(r)$, số $l$ không hợp lệ là $\text{start}(r) + 1$, và tổng hai số này là $r + 1$.
+2. **Cập nhật $\text{start}(r)$** bằng một chuỗi các biến "muộn nhất": mỗi biến là vị trí đầu muộn nhất của một dãy con khớp với một tiền tố của mẫu.
+
+**Mẫu bất kỳ $p$ độ dài $k$ (xét như dãy con).** Gọi `f[j]` là vị trí đầu muộn nhất của một dãy con khớp với $p[0..j)$ trong $s[0..r]$ ($-1$ nếu chưa có). Lập luận hoàn toàn tương tự bài trên:
+
+- Với $j \ge 2$ ta có `f[j] <= f[j-1]`, vì bỏ phần tử cuối của một dãy con khớp $p[0..j)$ thì được một dãy con khớp $p[0..j-1)$ có cùng vị trí đầu.
+- Khi đọc $s[r]$, nếu `s[r] != p[j-1]` thì không có dãy con mới khớp $p[0..j)$ nên `f[j]` giữ nguyên.
+- Nếu `s[r] == p[j-1]` và $j \ge 2$, mỗi dãy con mới là một dãy con khớp $p[0..j-1)$ trong $s[0..r-1]$ ghép thêm $s[r]$, nên vị trí đầu muộn nhất của chúng là `f[j-1]` cũ. Theo bất đẳng thức ở trên, giá trị này cũng không nhỏ hơn `f[j]` cũ, vì vậy `f[j] = f[j-1]` cũ.
+- Với $j = 1$, dãy con mới chỉ gồm một mình $s[r]$, và $r$ lớn hơn mọi vị trí cũ nên `f[1] = r`.
+
+Với $p$ = `abc` thì `f[1], f[2], f[3]` chính là `startA, startAB, startABC`.
+
+```java
+int k = p.length();
+int[] f = new int[k + 1];
+Arrays.fill(f, -1);
+for (int r = 0; r < n; r++) {
+    for (int j = k; j >= 1; j--)              // từ dài về ngắn
+        if (s.charAt(r) == p.charAt(j - 1))
+            f[j] = (j == 1) ? r : f[j - 1];
+    count += r - f[k];                        // số chuỗi hợp lệ; số hỏng là f[k] + 1
+}
+```
+
+Ta duyệt `j` giảm dần vì mỗi $s[r]$ chỉ được dùng một lần, tức `f[j - 1]` phải còn là giá trị của bước $r - 1$. Với `p = "aa"` và `s = "a"`, nếu duyệt tăng dần thì `f[1] = 0` rồi `f[2] = f[1] = 0`, nghĩa là `"a"` chứa `"aa"`, và đó là kết quả sai.
+
+Ví dụ với `s = "ababa"` và `p = "aba"`, số chuỗi hợp lệ là $1 + 2 + 2 + 3 + 2 = 10$ trên tổng số 15 chuỗi con. Mình đã đối chiếu với cách duyệt trâu trên 5 000 chuỗi ngẫu nhiên, với mẫu ngẫu nhiên dài tới 4, và kết quả đều khớp.
+
+**Khi nào không áp dụng được.** Cách này cần tính chất đơn điệu theo $l$ nói ở trên. Chẳng hạn, với bài đếm đoạn chứa **đúng** $k$ chữ `a`, việc kéo $l$ sang trái có thể thêm một chữ `a` và biến đoạn từ "đúng" thành "sai". Khi đó tập các $l$ không hợp lệ không còn là một đoạn đầu $l \le \text{start}(r)$. Ta phải đổi hướng, thường là lấy hiệu của hai bài toán "ít nhất $k$".
+
+## Bài tập liên quan
+
+[1358. Number of Substrings Containing All Three Characters](https://leetcode.com/problems/number-of-substrings-containing-all-three-characters/) là bài gần nhất có cùng khung. Cố định đầu mút phải $r$, đoạn $[l, r]$ chứa đủ ba chữ khi $l \le \min(\text{startA}, \text{lastB}, \text{lastC})$, nên mỗi $r$ có $\min(\text{startA}, \text{lastB}, \text{lastC}) + 1$ đoạn chứa. Gợi ý: ba chữ độc lập với nhau nên chỉ cần ba biến vị trí gần nhất, không cần chuỗi biến.
 
 ## Tóm tắt
 
-1. Đếm phần bù: chuỗi hỏng dễ mô tả hơn chuỗi hợp lệ.
-2. Chọn vị trí gánh sao cho mỗi chuỗi hỏng có **đúng một**: ở đây là $f(l)$, chữ `c` làm nó hỏng lần đầu.
-3. Đổi vòng để vị trí gánh nằm ngoài, rồi tìm tập điểm đầu nó gánh. Nhờ $f$ không giảm, tập đó là một khối liền nhau.
-4. Các khối phải **rời nhau và phủ hết**. Biên trái của khối mới là biên phải của khối cũ cộng một ($L(i) + 1$), không phải vị trí gánh cũ cộng một ($i + 1$).
-5. Thu vòng trong thành $(L(i) - \texttt{prev} + 1)(n - i)$.
-6. Viết brute force và so sánh trên chuỗi ngẫu nhiên ngắn. Chính `"abcabc"` sáu ký tự đã đủ lộ lỗi.
+1. Cố định đầu mút phải $r$ và đếm trực tiếp phía cần đếm, không cần qua phần bù.
+2. Tìm $\text{start}(r)$ sao cho $[l, r]$ chứa mẫu $\iff l \le \text{start}(r)$. Chứng minh từng chiều bằng một đến hai câu.
+3. $\text{start}(r)$ là vị trí đầu muộn nhất của một dãy con. Ta cập nhật nó bằng chuỗi các tiền tố của mẫu, trong đó mỗi biến chỉ đổi khi gặp ký tự kết thúc của tiền tố tương ứng. Ghép với phần tử gần nhất của tiền tố ngắn hơn luôn cho vị trí đầu muộn nhất (vì "chữ gần nhất phía trước" chỉ dịch sang phải khi vị trí dịch sang phải), nên ta gán thẳng mà không cần `max`.
+4. Cập nhật từ dài về ngắn để không dùng một ký tự hai lần.
+5. Đối chiếu với cách duyệt trâu trên các chuỗi ngẫu nhiên ngắn.
+
+## Ghi chú: lời giải đếm phần bù đầu tiên sai ở đâu
+
+Cách đếm phần bù, trong đó mỗi chữ `c` cộng `(startAB - prev + 1) * (n - i)` rồi đặt `prev = i + 1`, cho kết quả sai. Ở đây `prev - 1` là giá trị $\text{startABC}$ đã được tính là không hợp lệ, và khi $\text{startABC}$ tăng thêm $d$ thì có thêm $d$ giá trị $l$ không hợp lệ ở mọi $r \ge i$. Lỗi nằm ở chỗ đặt `prev = i + 1`: điều này ngầm khẳng định $\text{startABC} = i$ (vị trí một chữ `c`), trong khi $\text{startABC}$ là vị trí của một chữ `a`. Cách đúng là sau khi đọc chữ `c` này, $\text{startABC} = \text{startABC} = \text{startAB}$, nên phải đặt `prev = startAB + 1`. Trên `"abcabc"`, code sai tính tổng phần bù là 5 thay vì 7, nên đáp án ra 16 thay vì 14.
